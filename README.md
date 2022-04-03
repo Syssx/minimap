@@ -16,5 +16,5 @@ Forked from https://github.com/r-ainbowroad/minimap and edited to fit PlaceCZ ne
 ## Updating the template
 * The template updates automatically from https://placecz.martinnemi.me/
 
-## Updating the template
+## Bots
 * Bot is disabled in this version, please use: https://github.com/PlaceCZ/Bot
