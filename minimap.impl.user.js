@@ -523,7 +523,7 @@ const { html, render } = mlp_uhtml;
   );
   settings.addSetting(
     "donate",
-    new ButtonSetting("Donate me plz", function (donateSetting) {
+    new ButtonSetting("Donate to creator", function (donateSetting) {
       window.open("https://www.donationalerts.com/r/vovskic2002");
     })
   );
