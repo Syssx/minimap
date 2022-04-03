@@ -10,6 +10,7 @@
 // @updateURL   https://raw.githubusercontent.com/Syssx/minimap/d/main/minimap.user.js
 // @connect     raw.githubusercontent.com
 // @connect     media.githubusercontent.com
+// @connect     placecz.martinnemi.me
 // @require     https://unpkg.com/uhtml@2.8.1
 // ==/UserScript==
 
