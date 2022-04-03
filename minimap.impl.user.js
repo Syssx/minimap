@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        DO NOT DIRECTLY USE THIS IMPLEMENTATION OF r/Place MLP Minimap
+// @name        DO NOT DIRECTLY USE THIS IMPLEMENTATION OF r/Place (PlaceCZ) Minimap
 // @namespace   http://tampermonkey.net/
 // @description STOP; DO NOT DIRECTLY USE THIS
 // @include     https://hot-potato.reddit.com/embed*
@@ -8,7 +8,9 @@
 // @author      Ponywka, bb010g
 // @connect     raw.githubusercontent.com
 // @connect     media.githubusercontent.com
+// @connect     placecz.martinnemi.me
 // @require     https://unpkg.com/uhtml@2.8.1
+// @require	    https://cdn.jsdelivr.net/npm/toastify-js
 // ==/UserScript==
 
 // To format: `npx prettier --print-width 100 -w minimap.impl.user.js`
@@ -51,29 +53,53 @@ const { html, render } = mlp_uhtml;
   });
 
   const rPlaceWidth = 2000;
-  const rPlaceHeight = 2000;
+  const rPlaceHeight = 1000;
   const rPlacePixelSize = 10;
 
-  const rPlaceTemplatesGithubLfs = true;
-  const rPlaceTemplateBaseUrl = rPlaceTemplatesGithubLfs
-    ? "https://media.githubusercontent.com/media/r-ainbowroad/minimap/d/main"
-    : "https://raw.githubusercontent.com/r-ainbowroad/minimap/d/main";
+  const PLACE_CZ_BACKEND = "https://placecz.martinnemi.me/currentmap";
+  const rPlaceTemplateBaseUrl = "https://placecz.martinnemi.me";
+
+  async function fetchPlaceCzTemplate(url) {
+    return new Promise((resolve, reject) => {
+        mlp_GM.xmlHttpRequest({
+        method: "GET",
+        url: url,
+        onload: function (res) {
+          console.log("Fetched CZ template URL: " + res.finalUrl);
+          resolve(res.finalUrl);
+        },
+        onerror: function (res) {
+          reject(res);
+        },
+      });
+    });
+  }
+
+  const placeCzTemplateUrl = await fetchPlaceCzTemplate(PLACE_CZ_BACKEND);
+
+  /*
   const getRPlaceTemplateUrl = function (templateName, type) {
-    return `${rPlaceTemplateBaseUrl}/${templateName}/${type}2k2k.png`;
+    return `${rPlaceTemplateBaseUrl}/${templateName}/${type}.png`;
+  };
+  */
+
+  const getRPlaceTemplateUrl = function (templateName, url) {
+    return url
   };
   const rPlaceTemplateNames = [];
   const rPlaceTemplates = new Map();
+
   const addRPlaceTemplate = function (templateName, options) {
     rPlaceTemplates.set(templateName, {
-      canvasUrl: getRPlaceTemplateUrl(templateName, "canvas"),
+      canvasUrl: getRPlaceTemplateUrl(templateName, placeCzTemplateUrl), //canvasUrl: getRPlaceTemplateUrl(templateName, "canvas",
       botUrl: options.bot ? getRPlaceTemplateUrl(templateName, "bot") : undefined,
       maskUrl: options.mask ? getRPlaceTemplateUrl(templateName, "mask") : undefined,
     });
     rPlaceTemplateNames.push(templateName);
   };
-  addRPlaceTemplate("mlp", { bot: true, mask: true });
-  addRPlaceTemplate("r-ainbowroad", { bot: true, mask: true });
-  addRPlaceTemplate("spain", { bot: true });
+
+  addRPlaceTemplate("PlaceCZ", { bot: false, mask: false });
+
   let rPlaceTemplateName;
   let rPlaceTemplate;
   let rPlaceMask = undefined;
@@ -240,15 +266,15 @@ const { html, render } = mlp_uhtml;
     position: absolute;
     background-color: rgba(0,0,0,.75);
   }
-  
+
   mlpminimap .settings > div{
     display: none;
   }
-  
+
   mlpminimap .settings > .alwaysshow{
     display: block;
   }
-  
+
   mlpminimap:hover .settings > div{
     display: block;
   }
@@ -257,6 +283,11 @@ const { html, render } = mlp_uhtml;
     cursor: pointer;
     user-select: none;
   }
+
+  mlpminimap .settings .disabled{
+    color: gray;
+  }
+
 </style>
 <mlpminimap>
   <img class="map">
@@ -287,6 +318,30 @@ const { html, render } = mlp_uhtml;
       // </label>`;
       const onclick = () => this.onclick();
       const classes = ["clickable"];
+      this.enabled ? classes.push("alwaysshow") : null;
+      return html.for(ref, id)`<div data-id=${id} class=${classes.join(" ")} onclick=${onclick}>
+        ${this.name}: <span>${this.enabled ? "Enabled" : "Disabled"}</span>
+      </div>`;
+    }
+  }
+
+  class CheckboxDisabledSetting {
+    constructor(name, enabled = false, callback = function (setting) {}) {
+      this.name = name;
+      this.enabled = enabled;
+      this.callback = callback;
+    }
+    // onchange(e) {
+    //   this.enabled = e.target.checked;
+    //   this.callback();
+    // }
+    htmlFor(ref, id) {
+      // NOTE(Dusk): It looks like Reddit hijacks all native checkboxes.
+      // const onchange = () => this.onchange();
+      // return html.for(ref, id)`<label data-id=${id}>
+      //   ${this.name}: <input type="checkbox" .checked=${this.enabled} onchange=${onchange} />
+      // </label>`;
+      const classes = ["disabled"];
       this.enabled ? classes.push("alwaysshow") : null;
       return html.for(ref, id)`<div data-id=${id} class=${classes.join(" ")} onclick=${onclick}>
         ${this.name}: <span>${this.enabled ? "Enabled" : "Disabled"}</span>
@@ -437,13 +492,26 @@ const { html, render } = mlp_uhtml;
       updateTemplate();
     })
   );
-  settings.addSetting(
-    "bot",
-    new CheckboxSetting("Bot", false, function (botSetting) {
-      settings.getSetting("autoColor").enabled = false;
-      updateTemplate();
-    })
-  );
+  if (rPlaceTemplate.botUrl === undefined) {
+      console.log("Did not find bot template URL.");
+      settings.addSetting(
+          "bot",
+
+          new CheckboxDisabledSetting("Bot", false, function (botSetting) {
+              settings.getSetting("autoColor").enabled = false;
+              updateTemplate();
+          })
+      );
+  }
+  else {
+      settings.addSetting(
+          "bot",
+          new CheckboxSetting("Bot", false, function (botSetting) {
+              settings.getSetting("autoColor").enabled = false;
+              updateTemplate();
+          })
+      );
+  }
   settings.addSetting(
     "pixelDisplayProgress",
     new DisplaySetting("Current progress", "Unknown", true)
@@ -460,11 +528,12 @@ const { html, render } = mlp_uhtml;
   // Fetch template, returns a Promise<Uint8Array>, on error returns the response object
   function fetchTemplate(url) {
     return new Promise((resolve, reject) => {
-      mlp_GM.xmlHttpRequest({
+        mlp_GM.xmlHttpRequest({
         method: "GET",
         responseType: "arraybuffer",
-        url: `${url}?t=${new Date().getTime()}`,
+        url: url,
         onload: function (res) {
+          console.log("FetchTemplate URL: " + res.finalUrl);
           resolve(new Uint8Array(res.response));
         },
         onerror: function (res) {
@@ -758,6 +827,7 @@ const { html, render } = mlp_uhtml;
 
       if (settings.getSetting("bot").enabled && !botLock) {
         if (rPlaceTemplate.botUrl === undefined) {
+          console.log("Did not find bot template URL.");
           return;
         }
         embed.wakeUp();
