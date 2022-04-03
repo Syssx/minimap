@@ -3,9 +3,9 @@
 // @namespace   http://tampermonkey.net/
 // @description STOP; DO NOT DIRECTLY USE THIS
 // @include     https://hot-potato.reddit.com/embed*
-// @version     0.3
+// @version     0.1
 // @grant       GM.xmlHttpRequest
-// @author      Ponywka, bb010g
+// @author      Ponywka, bb010g, Syssx
 // @connect     raw.githubusercontent.com
 // @connect     media.githubusercontent.com
 // @connect     placecz.martinnemi.me
