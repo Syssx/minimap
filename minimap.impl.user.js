@@ -52,8 +52,13 @@ const { html, render } = mlp_uhtml;
     }, 1000);
   });
 
-  const rPlaceWidth = 2000;
-  const rPlaceHeight = 1000;
+  // Load all canvases
+  embed.camera.applyPosition({x: 0, y: 0});
+  embed.camera.applyPosition({x: 0, y: rPlaceCanvas.height});
+  embed.camera.applyPosition({x: rPlaceCanvas.width, y: 0});
+  embed.camera.applyPosition({x: rPlaceCanvas.width, y: rPlaceCanvas.height});
+  embed.camera.applyPosition({x: Math.floor(rPlaceCanvas.width / 2), y: Math.floor(rPlaceCanvas.height / 2) });
+
   const rPlacePixelSize = 10;
 
   const PLACE_CZ_BACKEND = "https://placecz.martinnemi.me/currentmap";
@@ -741,8 +746,12 @@ const { html, render } = mlp_uhtml;
   posParser.addEventListener("posChanged", () => {
     const coordinatesData = posParser.pos;
     const minimapData = getMinimapSize();
-    imageBlock.style.width = `${rPlaceWidth * rPlacePixelSize * coordinatesData.scale}px`;
-    imageBlock.style.height = `${rPlaceHeight * rPlacePixelSize * coordinatesData.scale}px`;
+    imageBlock.style.width = `${
+      imageBlock.naturalWidth * rPlacePixelSize * coordinatesData.scale
+    }px`;
+    imageBlock.style.height = `${
+      imageBlock.naturalHeight * rPlacePixelSize * coordinatesData.scale
+    }px`;
     imageBlock.style["margin-left"] = `${
       -1 *
       ((coordinatesData.x * rPlacePixelSize + rPlacePixelSize / 2) * coordinatesData.scale -
